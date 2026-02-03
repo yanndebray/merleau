@@ -1,9 +1,16 @@
 [project]
 name = "merleau"
-version = "0.1.1"
+version = "0.2.0"
 description = "Video analysis using Google's Gemini 2.5 Flash API"
 requires-python = ">=3.10"
 dependencies = [
     "google-genai",
     "python-dotenv",
 ]
+
+[project.scripts]
+ponty = "merleau.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

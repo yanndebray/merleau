@@ -4,34 +4,54 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Merleau is a Python utility for video analysis using Google's Gemini 2.5 Flash API. See README.md for installation and usage instructions.
+Merleau is a CLI tool for video understanding using Google's Gemini API. Named after Maurice Merleau-Ponty, the phenomenologist philosopher. The CLI command is `ponty`.
+
+See `research/positioning_merleau.md` for market positioning and differentiation strategy.
 
 ## Commands
 
 ```bash
-# Install dependencies (using uv)
+# Install dependencies
 uv sync
 
-# Run the video analyzer
-uv run python analyze_video.py
+# Run the CLI
+uv run ponty video.mp4
+uv run ponty video.mp4 -p "Custom prompt" -m gemini-2.0-flash
 
-# Alternative with pip
-pip install -r requirements.txt
-python analyze_video.py
+# Build package
+uv build
+
+# Publish to PyPI
+uv publish --token <token>
 ```
 
 ## Architecture
 
-Single-script application (`analyze_video.py`) with linear flow:
-1. Load API key from `.env` via `python-dotenv`
-2. Initialize Gemini client using `google-genai` SDK
-3. Upload video file to Gemini Files API
-4. Poll for file processing completion (2-second intervals)
-5. Generate content analysis using `gemini-2.5-flash` model
-6. Display results with token usage and cost breakdown
+```
+merleau/
+├── merleau/
+│   ├── __init__.py    # Package version
+│   └── cli.py         # CLI entry point (ponty command)
+├── research/          # Market research and positioning
+├── pyproject.toml     # Package config with [project.scripts] entry point
+└── analyze_video.py   # Legacy standalone script
+```
+
+### CLI Flow (merleau/cli.py)
+1. Parse arguments (video path, prompt, model, cost flag)
+2. Load API key from environment or `.env`
+3. Upload video to Gemini Files API
+4. Poll for processing completion
+5. Generate content analysis
+6. Display results and optional cost breakdown
+
+## Key Differentiators
+
+- **Native Gemini video** - Only CLI with true video understanding (not frame extraction)
+- **YouTube URL support** - Direct analysis via Gemini's preview feature
+- **Cost transparency** - Token usage and pricing shown by default
 
 ## Configuration
 
 - `.env` - Contains `GEMINI_API_KEY` (required)
-- `pyproject.toml` - Project metadata and dependencies for uv
-- `video_path` variable in `analyze_video.py` - Path to video file to analyze
+- `pyproject.toml` - Package metadata, dependencies, and CLI entry point
