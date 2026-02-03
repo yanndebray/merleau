@@ -5,6 +5,8 @@
 
 A CLI tool for video understanding using Google's Gemini API. Named after [Maurice Merleau-Ponty](https://en.wikipedia.org/wiki/Maurice_Merleau-Ponty), the phenomenologist philosopher whose work on perception inspires how this tool helps you perceive your videos.
 
+**[Website](https://yanndebray.github.io/merleau/)** · **[PyPI](https://pypi.org/project/merleau/)** · **[GitHub](https://github.com/yanndebray/merleau)**
+
 ## Why Merleau?
 
 Google Gemini is the **only major AI provider** with native video understanding—Claude doesn't support video, and GPT-4o requires frame extraction workarounds. Merleau is the first CLI that actually understands video rather than analyzing frames.

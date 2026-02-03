@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>merleau — Video Understanding from the Command Line</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="A powerful Python CLI for video analysis using Google's Gemini API. Native video understanding, YouTube support, cost estimation—all from your terminal.">
+    <meta name="keywords" content="video analysis, CLI, Python, Gemini, AI, video understanding, YouTube, multimodal">
+    <meta name="author" content="Yann Debray">
+
+    <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yanndebray.github.io/merleau/">
+    <meta property="og:title" content="merleau — Video Understanding from the Command Line">
+    <meta property="og:description" content="A powerful Python CLI for video analysis using Google's Gemini API. Native video understanding, YouTube support, cost estimation—all from your terminal.">
+    <meta property="og:site_name" content="merleau">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://yanndebray.github.io/merleau/">
+    <meta name="twitter:title" content="merleau — Video Understanding from the Command Line">
+    <meta name="twitter:description" content="A powerful Python CLI for video analysis using Google's Gemini API. Native video understanding, YouTube support, cost estimation—all from your terminal.">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👁️</text></svg>">
+    <link rel="canonical" href="https://yanndebray.github.io/merleau/">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1a1a2e;
+            --paper: #fafafa;
+            --paper-dark: #f0f0f5;
+            --accent: #0891b2;
+            --accent-deep: #0e7490;
+            --accent-light: #22d3ee;
+            --muted: #64748b;
+            --code-bg: #1e1e2e;
+            --code-text: #e2e8f0;
+            --serif: 'Crimson Pro', Georgia, serif;
+            --sans: 'DM Sans', -apple-system, sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--sans);
+            background: var(--paper);
+            color: var(--ink);
+            line-height: 1.7;
+            font-size: 17px;
+            overflow-x: hidden;
+        }
+
+        /* Subtle gradient overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(ellipse at top right, rgba(8, 145, 178, 0.03) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom left, rgba(14, 116, 144, 0.03) 0%, transparent 50%);
+            z-index: 1000;
+        }
+
+        /* Decorative border */
+        .page-border {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            border: 1px solid rgba(8, 145, 178, 0.1);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, var(--paper) 60%, transparent);
+        }
+
+        .logo {
+            font-family: var(--serif);
+            font-size: 1.4rem;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-mark {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--ink);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 6rem 3rem 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 800px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            background: var(--paper-dark);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--muted);
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease forwards;
+            opacity: 0;
+        }
+
+        .hero-badge span {
+            color: var(--accent);
+        }
+
+        h1 {
+            font-family: var(--serif);
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            font-weight: 300;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.8s ease 0.1s forwards;
+            opacity: 0;
+        }
+
+        h1 em {
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        .hero-subtitle {
+            font-family: var(--serif);
+            font-size: 1.4rem;
+            font-weight: 400;
+            color: var(--muted);
+            max-width: 540px;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease 0.2s forwards;
+            opacity: 0;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease 0.3s forwards;
+            opacity: 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-deep);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(8, 145, 178, 0.25);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--ink);
+            border: 1px solid rgba(26, 26, 46, 0.2);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(8, 145, 178, 0.03);
+        }
+
+        /* Decorative elements */
+        .hero-decoration {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 400px;
+            height: 500px;
+            opacity: 0.06;
+            pointer-events: none;
+        }
+
+        .hero-decoration svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Install Banner */
+        .install-banner {
+            background: var(--code-bg);
+            padding: 1rem 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .install-cmd {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            color: var(--code-text);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .install-cmd .prefix {
+            color: var(--accent-light);
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 0.3rem;
+            transition: color 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: var(--code-text);
+        }
+
+        /* Main content sections */
+        section {
+            padding: 6rem 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-eyebrow {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-family: var(--serif);
+            font-size: 2.5rem;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+        }
+
+        .section-desc {
+            color: var(--muted);
+            font-size: 1.1rem;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--paper-dark);
+            padding: 2.5rem;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(8, 145, 178, 0.1);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-deep));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+        }
+
+        .feature-card h3 {
+            font-family: var(--serif);
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* Code Examples */
+        .code-section {
+            background: var(--code-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .code-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .code-tab {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            font-family: var(--mono);
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .code-tab.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--code-text);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        pre {
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: var(--code-text);
+        }
+
+        code {
+            font-family: var(--mono);
+        }
+
+        .code-comment { color: #6b7280; }
+        .code-keyword { color: #22d3ee; }
+        .code-string { color: #86efac; }
+        .code-function { color: #93c5fd; }
+        .code-class { color: #f0abfc; }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 2rem 0;
+            color: var(--muted);
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            width: 60px;
+            height: 1px;
+            background: currentColor;
+            opacity: 0.3;
+        }
+
+        .divider svg {
+            width: 20px;
+            height: 20px;
+            opacity: 0.5;
+            color: var(--accent);
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .comparison-table th {
+            background: var(--paper-dark);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 500;
+        }
+
+        .check {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .cross {
+            color: #ef4444;
+        }
+
+        /* API Reference */
+        .api-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .api-item {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            background: var(--paper-dark);
+            border-radius: 8px;
+            align-items: start;
+        }
+
+        .api-name {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        .api-desc {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        /* Philosophy Quote */
+        .philosophy {
+            background: linear-gradient(135deg, var(--paper-dark) 0%, var(--paper) 100%);
+            padding: 5rem 3rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .quote-mark {
+            font-family: var(--serif);
+            font-size: 8rem;
+            line-height: 1;
+            color: var(--accent);
+            opacity: 0.15;
+            position: absolute;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        blockquote {
+            font-family: var(--serif);
+            font-size: 1.6rem;
+            font-style: italic;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .quote-author {
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            color: var(--muted);
+            font-style: normal;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 3rem 3rem;
+            border-top: 1px solid rgba(8, 145, 178, 0.1);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .footer-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        .footer-copy {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Scroll animations */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .animate-on-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem 1.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 8rem 1.5rem 4rem;
+            }
+
+            section {
+                padding: 4rem 1.5rem;
+            }
+
+            .api-item {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .install-banner {
+                padding: 1rem 1.5rem;
+            }
+
+            .install-cmd {
+                font-size: 0.8rem;
+                padding: 0.5rem 1rem;
+            }
+
+            .comparison-table {
+                font-size: 0.8rem;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-border"></div>
+
+    <nav>
+        <a href="#" class="logo">
+            <span class="logo-mark">m</span>
+            merleau
+        </a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#usage">Usage</a>
+            <a href="#comparison">Why Gemini</a>
+            <a href="https://github.com/yanndebray/merleau" target="_blank">GitHub</a>
+            <a href="https://pypi.org/project/merleau/" target="_blank">PyPI</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span>v0.2.0</span> · MIT Licensed
+                </div>
+                <h1>See. Understand.<br><em>Perceive.</em></h1>
+                <p class="hero-subtitle">
+                    A powerful Python CLI for video understanding using Google's Gemini API. Native video processing, YouTube support, cost estimation—all from your terminal.
+                </p>
+                <div class="hero-actions">
+                    <a href="#usage" class="btn btn-primary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                        Get Started
+                    </a>
+                    <!-- <a href="https://github.com/yanndebray/merleau" class="btn btn-secondary" target="_blank">
+                        View on GitHub
+                    </a> -->
+                </div>
+            </div>
+            <div class="hero-decoration">
+                <svg viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Eye-inspired geometric design -->
+                    <ellipse cx="200" cy="250" rx="150" ry="100" stroke="currentColor" stroke-width="0.5" fill="none"/>
+                    <ellipse cx="200" cy="250" rx="120" ry="80" stroke="currentColor" stroke-width="0.5" fill="none"/>
+                    <circle cx="200" cy="250" r="60" stroke="currentColor" stroke-width="0.5" fill="none"/>
+                    <circle cx="200" cy="250" r="30" stroke="currentColor" stroke-width="0.5" fill="none"/>
+                    <line x1="50" y1="250" x2="350" y2="250" stroke="currentColor" stroke-width="0.3"/>
+                    <line x1="200" y1="100" x2="200" y2="400" stroke="currentColor" stroke-width="0.3"/>
+                    <path d="M50 250 Q200 100 350 250" stroke="currentColor" stroke-width="0.3" fill="none"/>
+                    <path d="M50 250 Q200 400 350 250" stroke="currentColor" stroke-width="0.3" fill="none"/>
+                </svg>
+            </div>
+        </section>
+
+        <div class="install-banner">
+            <div class="install-cmd">
+                <span class="prefix">$</span> pip install merleau
+                <button class="copy-btn" onclick="copyToClipboard('pip install merleau')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <section id="features">
+            <div class="section-header animate-on-scroll">
+                <p class="section-eyebrow">Features</p>
+                <h2>True Video Understanding</h2>
+                <p class="section-desc">The first CLI that actually understands video—not just frames.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card animate-on-scroll">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polygon points="23 7 16 12 23 17 23 7"/>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                    </svg>
+                    <h3>Native Video Processing</h3>
+                    <p>Upload and analyze videos directly with Gemini's native multimodal understanding. No frame extraction required.</p>
+                </div>
+
+                <div class="feature-card animate-on-scroll">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/>
+                        <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/>
+                    </svg>
+                    <h3>YouTube Support</h3>
+                    <p>Analyze YouTube videos directly via URL. Gemini's preview feature enables seamless video understanding from the web.</p>
+                </div>
+
+                <div class="feature-card animate-on-scroll">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                    <h3>Long Video Support</h3>
+                    <p>Process videos up to 2+ hours with Gemini's 2 million token context window. Perfect for lectures, meetings, and documentaries.</p>
+                </div>
+
+                <div class="feature-card animate-on-scroll">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="23"/>
+                        <line x1="8" y1="23" x2="16" y2="23"/>
+                    </svg>
+                    <h3>Audio + Visual</h3>
+                    <p>Combined audio-visual analysis without separate transcription steps. Understand speech, music, and visuals together.</p>
+                </div>
+
+                <div class="feature-card animate-on-scroll">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    <h3>Cost Transparency</h3>
+                    <p>See token usage and estimated costs for every analysis. Budget-friendly at $0.11-0.32 per hour of video.</p>
+                </div>
+
+                <div class="feature-card animate-on-scroll">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polyline points="4 17 10 11 4 5"/>
+                        <line x1="12" y1="19" x2="20" y2="19"/>
+                    </svg>
+                    <h3>Simple CLI</h3>
+                    <p>One command to analyze any video. Customize prompts, choose models, and get results in seconds.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M20.188 10.934c-1.47-6.278-14.906-6.278-16.376 0"/>
+                <path d="M3.812 13.066c1.47 6.278 14.906 6.278 16.376 0"/>
+            </svg>
+        </div>
+
+        <section id="usage">
+            <div class="section-header animate-on-scroll">
+                <p class="section-eyebrow">Quick Start</p>
+                <h2>Perception in Seconds</h2>
+                <p class="section-desc">Install and analyze your first video in under a minute.</p>
+            </div>
+
+            <div class="code-section animate-on-scroll">
+                <div class="code-header">
+                    <div class="code-tabs">
+                        <button class="code-tab active">Terminal</button>
+                    </div>
+                    <div class="code-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+<pre><span class="code-comment"># Install the package</span>
+<span class="code-keyword">$</span> pip install merleau
+
+<span class="code-comment"># Set your Gemini API key</span>
+<span class="code-keyword">$</span> export GEMINI_API_KEY=<span class="code-string">"your-api-key"</span>
+
+<span class="code-comment"># Analyze a video</span>
+<span class="code-keyword">$</span> ponty video.mp4
+<span class="code-string">Uploading video: video.mp4</span>
+<span class="code-string">Upload complete. File URI: files/abc123</span>
+<span class="code-string">Waiting for file to be processed...</span>
+<span class="code-string">File state: ACTIVE</span>
+
+<span class="code-string">Analyzing video with gemini-2.5-flash...</span>
+
+<span class="code-string">--- Video Analysis ---</span>
+<span class="code-string">The video shows a product demonstration...</span>
+
+<span class="code-string">--- Usage Information ---</span>
+<span class="code-string">Prompt tokens: 45,231</span>
+<span class="code-string">Response tokens: 847</span>
+<span class="code-string">Total tokens: 46,078</span>
+<span class="code-string">Estimated cost: $0.007</span></pre>
+            </div>
+
+            <div class="code-section animate-on-scroll">
+                <div class="code-header">
+                    <div class="code-tabs">
+                        <button class="code-tab active">Custom Prompts</button>
+                    </div>
+                    <div class="code-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+<pre><span class="code-comment"># Summarize key points</span>
+<span class="code-keyword">$</span> ponty lecture.mp4 -p <span class="code-string">"Summarize the main topics covered"</span>
+
+<span class="code-comment"># Extract action items from a meeting</span>
+<span class="code-keyword">$</span> ponty meeting.mp4 -p <span class="code-string">"List all action items and who is responsible"</span>
+
+<span class="code-comment"># Analyze sports footage</span>
+<span class="code-keyword">$</span> ponty game.mp4 -p <span class="code-string">"Describe the key plays and turning points"</span>
+
+<span class="code-comment"># Use a different model</span>
+<span class="code-keyword">$</span> ponty video.mp4 -m gemini-2.0-flash -p <span class="code-string">"What products are shown?"</span>
+
+<span class="code-comment"># Hide cost information</span>
+<span class="code-keyword">$</span> ponty video.mp4 --no-cost</pre>
+            </div>
+        </section>
+
+        <section id="comparison">
+            <div class="section-header animate-on-scroll">
+                <p class="section-eyebrow">Why Gemini</p>
+                <h2>The Only Choice for Native Video</h2>
+                <p class="section-desc">Gemini is the only major AI provider with true video understanding.</p>
+            </div>
+
+            <table class="comparison-table animate-on-scroll">
+                <thead>
+                    <tr>
+                        <th>Capability</th>
+                        <th>Gemini</th>
+                        <th>GPT-4o</th>
+                        <th>Claude</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Native Video Upload</td>
+                        <td class="check">✓ Direct upload</td>
+                        <td class="cross">✗ Frame extraction</td>
+                        <td class="cross">✗ No support</td>
+                    </tr>
+                    <tr>
+                        <td>Audio from Video</td>
+                        <td class="check">✓ Combined analysis</td>
+                        <td class="cross">✗ Separate Whisper</td>
+                        <td class="cross">✗ No support</td>
+                    </tr>
+                    <tr>
+                        <td>Max Duration</td>
+                        <td class="check">2+ hours</td>
+                        <td>Minutes</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td>YouTube URLs</td>
+                        <td class="check">✓ Free preview</td>
+                        <td class="cross">✗ No</td>
+                        <td class="cross">✗ No</td>
+                    </tr>
+                    <tr>
+                        <td>Cost per Hour</td>
+                        <td class="check">$0.11-0.32</td>
+                        <td>~$7.50</td>
+                        <td>N/A</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="philosophy">
+            <span class="quote-mark">"</span>
+            <blockquote class="animate-on-scroll">
+                The world is not what I think, but what I live through.
+                <footer class="quote-author">— Maurice Merleau-Ponty, <em>Phenomenology of Perception</em></footer>
+            </blockquote>
+        </section>
+
+        <section>
+            <div class="section-header animate-on-scroll">
+                <p class="section-eyebrow">CLI Reference</p>
+                <h2>The ponty Command</h2>
+                <p class="section-desc">Simple, powerful video analysis from your terminal.</p>
+            </div>
+
+            <div class="api-grid">
+                <div class="api-item animate-on-scroll">
+                    <span class="api-name">ponty &lt;video&gt;</span>
+                    <span class="api-desc">Analyze a video file. Supports MP4, MOV, AVI, and other common formats.</span>
+                </div>
+                <div class="api-item animate-on-scroll">
+                    <span class="api-name">-p, --prompt</span>
+                    <span class="api-desc">Custom prompt for the analysis. Default: "Explain what happens in this video"</span>
+                </div>
+                <div class="api-item animate-on-scroll">
+                    <span class="api-name">-m, --model</span>
+                    <span class="api-desc">Gemini model to use. Default: gemini-2.5-flash. Options: gemini-2.0-flash, gemini-1.5-pro</span>
+                </div>
+                <div class="api-item animate-on-scroll">
+                    <span class="api-name">--no-cost</span>
+                    <span class="api-desc">Hide token usage and cost estimation from the output.</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <!-- <a href="https://github.com/yanndebray/merleau" target="_blank">GitHub</a> -->
+                <a href="https://pypi.org/project/merleau/" target="_blank">PyPI</a>
+            </div>
+            <p class="footer-copy">
+                Built with google-genai · MIT License
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`;
+                setTimeout(() => {
+                    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+                }, 2000);
+            });
+        }
+
+        // Scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

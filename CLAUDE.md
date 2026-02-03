@@ -32,6 +32,8 @@ merleau/
 ├── merleau/
 │   ├── __init__.py    # Package version
 │   └── cli.py         # CLI entry point (ponty command)
+├── website/           # Landing page (GitHub Pages)
+│   └── index.html     # Single-page site
 ├── research/          # Market research and positioning
 ├── pyproject.toml     # Package config with [project.scripts] entry point
 └── analyze_video.py   # Legacy standalone script
