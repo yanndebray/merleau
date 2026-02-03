@@ -9,10 +9,14 @@ Merleau is a Python utility for video analysis using Google's Gemini 2.5 Flash A
 ## Commands
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (using uv)
+uv sync
 
 # Run the video analyzer
+uv run python analyze_video.py
+
+# Alternative with pip
+pip install -r requirements.txt
 python analyze_video.py
 ```
 
@@ -29,4 +33,5 @@ Single-script application (`analyze_video.py`) with linear flow:
 ## Configuration
 
 - `.env` - Contains `GEMINI_API_KEY` (required)
+- `pyproject.toml` - Project metadata and dependencies for uv
 - `video_path` variable in `analyze_video.py` - Path to video file to analyze

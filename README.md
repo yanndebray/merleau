@@ -11,6 +11,12 @@ A Python utility for video analysis using Google's Gemini 2.5 Flash API.
 
 ## Installation
 
+Using [uv](https://docs.astral.sh/uv/) (recommended):
+```bash
+uv sync
+```
+
+Or using pip:
 ```bash
 pip install -r requirements.txt
 ```
@@ -29,8 +35,9 @@ pip install -r requirements.txt
 2. Update the `video_path` variable in `analyze_video.py` to point to your video
 3. Run the analysis:
    ```bash
-   python analyze_video.py
+   uv run python analyze_video.py
    ```
+   Or with pip installation: `python analyze_video.py`
 
 ## Output
 
