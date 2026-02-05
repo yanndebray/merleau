@@ -63,6 +63,41 @@ ponty video.mp4 --no-cost
 | `-m, --model` | Gemini model to use (default: gemini-2.5-flash) |
 | `--no-cost` | Hide usage and cost information |
 
+## Reducing Costs with Compression
+
+Compressing videos before analysis can reduce API costs by ~10-15% without degrading analysis quality. Gemini's token count is affected by video resolution and bitrate.
+
+### Quick Compression with ffmpeg
+
+```bash
+# Basic compression (recommended)
+ffmpeg -i input.mp4 -vcodec libx264 -crf 28 -preset medium -vf "scale=1280:-2" output.mp4
+
+# Aggressive compression (smaller file, lower quality)
+ffmpeg -i input.mp4 -vcodec libx264 -crf 32 -preset medium -vf "scale=640:-2" output.mp4
+
+# Keep audio (for speech analysis)
+ffmpeg -i input.mp4 -vcodec libx264 -crf 28 -preset medium -vf "scale=1280:-2" -acodec aac -b:a 128k output.mp4
+```
+
+### Compression Options Explained
+
+| Option | Description |
+|--------|-------------|
+| `-crf 28` | Quality level (18-28 recommended, higher = smaller file) |
+| `-preset medium` | Encoding speed/quality tradeoff |
+| `-vf "scale=1280:-2"` | Resize to 1280px width, maintain aspect ratio |
+| `-an` | Remove audio (if not needed) |
+| `-acodec aac -b:a 128k` | Compress audio to 128kbps AAC |
+
+### Cost Comparison Example
+
+| Version | File Size | Prompt Tokens | Input Cost |
+|---------|-----------|---------------|------------|
+| Original (1080p) | 52 MB | 14,757 | $0.00221 |
+| Compressed (720p) | 2.6 MB | 13,157 | $0.00197 |
+| **Savings** | **95%** | **10.8%** | **10.8%** |
+
 ## Output
 
 The CLI provides:
