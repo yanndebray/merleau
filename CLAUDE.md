@@ -13,10 +13,14 @@ See `research/positioning_merleau.md` for market positioning and differentiation
 ```bash
 # Install dependencies
 uv sync
+uv sync --extra web  # Include Streamlit
 
 # Run the CLI
 uv run ponty video.mp4
 uv run ponty video.mp4 -p "Custom prompt" -m gemini-2.0-flash
+
+# Run the web UI
+uv run streamlit run streamlit_app.py
 
 # Build package
 uv build
@@ -31,7 +35,8 @@ uv publish --token <token>
 merleau/
 ├── merleau/
 │   ├── __init__.py    # Package version
-│   └── cli.py         # CLI entry point (ponty command)
+│   └── cli.py         # CLI + core analyze_video() function
+├── streamlit_app.py   # Web UI (run with: streamlit run streamlit_app.py)
 ├── website/           # Landing page (GitHub Pages)
 │   └── index.html     # Single-page site
 ├── research/          # Market research and positioning

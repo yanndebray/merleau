@@ -4,19 +4,47 @@ import argparse
 import os
 import sys
 import time
+from dataclasses import dataclass
+from typing import Callable, Optional
 
 from dotenv import load_dotenv
 from google import genai
 
 
-def wait_for_processing(client, file):
+@dataclass
+class AnalysisResult:
+    """Result from video analysis."""
+    text: str
+    prompt_tokens: int
+    response_tokens: int
+    total_tokens: int
+    input_cost: float
+    output_cost: float
+    total_cost: float
+
+
+def wait_for_processing(client, file, on_progress: Optional[Callable] = None):
     """Wait for file to finish processing."""
     while file.state.name == "PROCESSING":
-        print(".", end="", flush=True)
+        if on_progress:
+            on_progress()
+        else:
+            print(".", end="", flush=True)
         time.sleep(2)
         file = client.files.get(name=file.name)
-    print()
+    if not on_progress:
+        print()
     return file
+
+
+def calculate_cost(usage):
+    """Calculate cost from usage metadata."""
+    # Gemini 2.5 Flash pricing (as of 2025):
+    # Input: $0.15 per 1M tokens (text/image), $0.075 per 1M tokens for video
+    # Output: $0.60 per 1M tokens, $3.50 for thinking tokens
+    input_cost = (usage.prompt_token_count / 1_000_000) * 0.15
+    output_cost = (usage.candidates_token_count / 1_000_000) * 0.60
+    return input_cost, output_cost, input_cost + output_cost
 
 
 def print_usage(usage):
@@ -26,61 +54,131 @@ def print_usage(usage):
     print(f"Response tokens: {usage.candidates_token_count}")
     print(f"Total tokens: {usage.total_token_count}")
 
-    # Gemini 2.5 Flash pricing (as of 2025):
-    # Input: $0.15 per 1M tokens (text/image), $0.075 per 1M tokens for video
-    # Output: $0.60 per 1M tokens, $3.50 for thinking tokens
-    input_cost = (usage.prompt_token_count / 1_000_000) * 0.15
-    output_cost = (usage.candidates_token_count / 1_000_000) * 0.60
-    total_cost = input_cost + output_cost
+    input_cost, output_cost, total_cost = calculate_cost(usage)
     print(f"\nEstimated cost:")
     print(f"  Input:  ${input_cost:.6f}")
     print(f"  Output: ${output_cost:.6f}")
     print(f"  Total:  ${total_cost:.6f}")
 
 
-def analyze(video_path, prompt, model, show_cost):
-    """Analyze a video file using Gemini."""
+def analyze_video(
+    video_path: str,
+    prompt: str = "Explain what happens in this video",
+    model: str = "gemini-2.5-flash",
+    api_key: Optional[str] = None,
+    on_upload: Optional[Callable[[str], None]] = None,
+    on_processing: Optional[Callable] = None,
+    on_analyzing: Optional[Callable] = None,
+) -> AnalysisResult:
+    """
+    Analyze a video file using Gemini.
+
+    Args:
+        video_path: Path to the video file
+        prompt: Analysis prompt
+        model: Gemini model to use
+        api_key: Optional API key (falls back to env var)
+        on_upload: Callback when upload completes (receives file URI)
+        on_processing: Callback during processing (called repeatedly)
+        on_analyzing: Callback when analysis starts
+
+    Returns:
+        AnalysisResult with text, tokens, and cost
+
+    Raises:
+        ValueError: If API key not found or file doesn't exist
+        RuntimeError: If file processing fails
+    """
     load_dotenv()
 
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = api_key or os.getenv("GEMINI_API_KEY")
     if not api_key:
-        print("Error: GEMINI_API_KEY not found in environment or .env file", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("GEMINI_API_KEY not found in environment or .env file")
 
     if not os.path.exists(video_path):
-        print(f"Error: Video file not found: {video_path}", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f"Video file not found: {video_path}")
 
     client = genai.Client(api_key=api_key)
 
     # Upload video
-    print(f"Uploading video: {video_path}")
     myfile = client.files.upload(file=video_path)
-    print(f"Upload complete. File URI: {myfile.uri}")
+    if on_upload:
+        on_upload(myfile.uri)
 
     # Wait for processing
-    print("Waiting for file to be processed...", end="")
-    myfile = wait_for_processing(client, myfile)
+    myfile = wait_for_processing(client, myfile, on_progress=on_processing)
 
     if myfile.state.name == "FAILED":
-        print(f"Error: File processing failed", file=sys.stderr)
-        sys.exit(1)
-
-    print(f"File state: {myfile.state.name}")
+        raise RuntimeError("File processing failed")
 
     # Generate analysis
-    print(f"\nAnalyzing video with {model}...")
+    if on_analyzing:
+        on_analyzing()
+
     response = client.models.generate_content(
         model=model,
         contents=[myfile, prompt]
     )
 
-    print("\n--- Video Analysis ---")
-    print(response.text)
+    # Extract usage info
+    usage = response.usage_metadata
+    input_cost, output_cost, total_cost = calculate_cost(usage)
 
-    # Show usage if requested
-    if show_cost and hasattr(response, 'usage_metadata'):
-        print_usage(response.usage_metadata)
+    return AnalysisResult(
+        text=response.text,
+        prompt_tokens=usage.prompt_token_count,
+        response_tokens=usage.candidates_token_count,
+        total_tokens=usage.total_token_count,
+        input_cost=input_cost,
+        output_cost=output_cost,
+        total_cost=total_cost,
+    )
+
+
+def analyze(video_path, prompt, model, show_cost):
+    """Analyze a video file using Gemini (CLI wrapper)."""
+    try:
+        print(f"Uploading video: {video_path}")
+
+        def on_upload(uri):
+            print(f"Upload complete. File URI: {uri}")
+            print("Waiting for file to be processed...", end="")
+
+        def on_processing():
+            print(".", end="", flush=True)
+
+        def on_analyzing():
+            print()
+            print(f"\nAnalyzing video with {model}...")
+
+        result = analyze_video(
+            video_path=video_path,
+            prompt=prompt,
+            model=model,
+            on_upload=on_upload,
+            on_processing=on_processing,
+            on_analyzing=on_analyzing,
+        )
+
+        print("\n--- Video Analysis ---")
+        print(result.text)
+
+        if show_cost:
+            print("\n--- Usage Information ---")
+            print(f"Prompt tokens: {result.prompt_tokens}")
+            print(f"Response tokens: {result.response_tokens}")
+            print(f"Total tokens: {result.total_tokens}")
+            print(f"\nEstimated cost:")
+            print(f"  Input:  ${result.input_cost:.6f}")
+            print(f"  Output: ${result.output_cost:.6f}")
+            print(f"  Total:  ${result.total_cost:.6f}")
+
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except RuntimeError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def main():
