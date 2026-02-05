@@ -7,6 +7,8 @@ A CLI tool for video understanding using Google's Gemini API. Named after [Mauri
 
 **[Website](https://yanndebray.github.io/merleau/)** · **[PyPI](https://pypi.org/project/merleau/)** · **[GitHub](https://github.com/yanndebray/merleau)**
 
+https://github.com/user-attachments/assets/e2c5b476-ddab-49ab-a35c-9ae5e880c25c
+
 ## Why Merleau?
 
 Google Gemini is the **only major AI provider** with native video understanding—Claude doesn't support video, and GPT-4o requires frame extraction workarounds. Merleau is the first CLI that actually understands video rather than analyzing frames.
@@ -18,6 +20,7 @@ Google Gemini is the **only major AI provider** with native video understanding�
 - **Customizable prompts** - Ask any question about your video
 - **Cost estimation** - Token usage tracking and cost breakdown
 - **Multiple models** - Support for different Gemini models
+- **Web UI** - Streamlit app for browser-based analysis
 
 ## Installation
 
@@ -53,6 +56,16 @@ ponty video.mp4 -m gemini-2.0-flash
 
 # Hide cost information
 ponty video.mp4 --no-cost
+```
+
+### Web UI
+
+```bash
+# Install with web dependencies
+pip install merleau[web]
+
+# Run the Streamlit app
+streamlit run streamlit_app.py
 ```
 
 ### Options
