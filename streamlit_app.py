@@ -45,7 +45,7 @@ with st.sidebar:
     **Links**
     - [GitHub](https://github.com/yanndebray/merleau)
     - [PyPI](https://pypi.org/project/merleau/)
-    - [Documentation](https://yanndebray.github.io/merleau/)
+    - [Documentation](https://merleau.cc)
     """)
 
 # Main content

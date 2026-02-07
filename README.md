@@ -9,7 +9,7 @@ A CLI tool for video understanding using Google's Gemini API. Named after [Mauri
 [![Python](https://img.shields.io/pypi/pyversions/merleau)](https://pypi.org/project/merleau/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Streamlit App](https://img.shields.io/badge/Streamlit-App-ff4b4b?logo=streamlit&logoColor=white)](https://merleau.streamlit.app/)
-[![Website](https://img.shields.io/badge/Website-GitHub%20Pages-0891b2)](https://yanndebray.github.io/merleau/)
+[![Website](https://img.shields.io/badge/Website-merleau.cc-0891b2)](https://merleau.cc)
 
 https://github.com/user-attachments/assets/e2c5b476-ddab-49ab-a35c-9ae5e880c25c
 
