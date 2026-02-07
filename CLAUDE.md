@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Merleau is a CLI tool for video understanding using Google's Gemini API. Named after Maurice Merleau-Ponty, the phenomenologist philosopher. The CLI command is `ponty`.
 
+- **Website:** https://merleau.cc (hosted on GitHub Pages from `website/`)
+- **Web App:** https://merleau.streamlit.app/ (deployed from `streamlit_app.py`)
+- **PyPI:** https://pypi.org/project/merleau/
+
 See `research/positioning_merleau.md` for market positioning and differentiation strategy.
 
 ## Commands
@@ -27,7 +31,7 @@ uv run streamlit run streamlit_app.py
 # Build package
 uv build
 
-# Run tests (after making changes to cli.py)
+# Smoke tests (after making changes to cli.py)
 uv run ponty --version
 uv run ponty --help
 ```
@@ -38,14 +42,15 @@ uv run ponty --help
 merleau/
 ├── merleau/
 │   ├── __init__.py    # Package version (__version__)
-│   └── cli.py         # CLI + core analyze_video() function
-├── streamlit_app.py   # Web UI (run with: streamlit run streamlit_app.py)
-├── website/           # Landing page (GitHub Pages)
+│   └── cli.py         # CLI + core analyze_video() + is_youtube_url()
+├── streamlit_app.py   # Web UI (file upload, YouTube URL, screen recording tabs)
+├── website/           # Landing page (merleau.cc via GitHub Pages)
 │   └── index.html     # Single-page site with version badge + CLI reference
+├── img/               # Images used by README and Streamlit app
 ├── research/          # Market research, positioning, and video analysis exports
 ├── .github/workflows/
 │   └── python-publish.yml  # Auto-publish to PyPI on GitHub release
-├── pyproject.toml     # Package config with [project.scripts] entry point
+├── pyproject.toml     # Package config, classifiers, [project.scripts] entry point
 └── analyze_video.py   # Legacy standalone script
 ```
 
@@ -59,17 +64,25 @@ merleau/
 7. Display results and optional cost breakdown
 8. If `--export md`: write markdown file named after video/YouTube ID
 
+### Streamlit App (streamlit_app.py)
+- **Tab 1:** File upload with video preview
+- **Tab 2:** YouTube URL input with video preview and direct analysis
+- **Tab 3:** Screen recording guide with Streamlit built-in screencast screenshot
+- Uses `analyze_video()` and `is_youtube_url()` from `merleau.cli`
+- Images loaded via `pathlib.Path(__file__).parent` for Streamlit Cloud compatibility
+
 ## Key Differentiators
 
-- **Native Gemini video** - Only CLI with true video understanding (not frame extraction)
-- **YouTube URL support** - Direct analysis via `Part.from_uri()`, supports youtube.com/watch, youtu.be, youtube.com/shorts
-- **Markdown export** - Save analysis with metadata header (`-e md`)
-- **Cost transparency** - Token usage and pricing shown by default
+- **Native Gemini video** — Only CLI with true video understanding (not frame extraction)
+- **YouTube URL support** — Direct analysis via `Part.from_uri()`, supports youtube.com/watch, youtu.be, youtube.com/shorts
+- **Markdown export** — Save analysis with metadata header (`-e md`)
+- **Cost transparency** — Token usage and pricing shown by default
+- **Web UI** — Streamlit app with file upload, YouTube URL, and screen recording support
 
 ## Configuration
 
-- `.env` - Contains `GEMINI_API_KEY` (required)
-- `pyproject.toml` - Package metadata, dependencies, CLI entry point, and `readme = "README.md"` (required for PyPI description)
+- `.env` — Contains `GEMINI_API_KEY` (required)
+- `pyproject.toml` — Package metadata, classifiers, dependencies, CLI entry point, and `readme = "README.md"` (required for PyPI description)
 
 ## Release Procedure
 
@@ -80,8 +93,9 @@ Follow these steps **in order** when making a release:
 - `pyproject.toml` — `version = "X.Y.Z"`
 - `website/index.html` — version badge `<span>vX.Y.Z</span>`
 
-### 2. Update website CLI reference
-If new CLI flags were added, update the CLI reference section in `website/index.html` (the `api-grid` div with `api-item` entries).
+### 2. Update website and README if needed
+- If new CLI flags were added, update the CLI reference in `website/index.html` (the `api-grid` div) and the Options table in `README.md`
+- If new features were added, update the Features list in `README.md`
 
 ### 3. Commit and push
 ```bash
@@ -100,12 +114,16 @@ gh release create vX.Y.Z --title "vX.Y.Z" --notes "release notes here"
 ### 5. Verify
 - Check GitHub Actions for successful PyPI publish
 - Verify at https://pypi.org/project/merleau/
+- Streamlit Cloud auto-deploys from main (no action needed)
 
 ## Important Notes
 
 - **Package manager:** Always use `uv` (not pip) for local development
 - **PyPI publishing:** Handled automatically by GitHub Actions on release — do NOT run `uv publish` manually
-- **Website:** Hosted on GitHub Pages from `website/index.html` — update version badge and CLI reference with every release
+- **Website:** Hosted at merleau.cc (GitHub Pages from `website/index.html`) — update version badge and CLI reference with every release
 - **Version:** Must be kept in sync across `__init__.py`, `pyproject.toml`, and `website/index.html`
 - **README:** The `readme = "README.md"` field in `pyproject.toml` is required for PyPI to display the project description
+- **Classifiers:** Python version classifiers in `pyproject.toml` are required for the shields.io Python badge to render
+- **Streamlit Cloud:** Images must use absolute paths via `pathlib.Path(__file__).parent`, not relative paths
 - **YouTube detection:** `is_youtube_url()` in `cli.py` handles youtube.com/watch, youtu.be, and youtube.com/shorts patterns
+- **URLs:** Website is merleau.cc (not yanndebray.github.io/merleau)
