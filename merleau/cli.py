@@ -153,7 +153,39 @@ def analyze_video(
     )
 
 
-def analyze(video_path, prompt, model, show_cost):
+def export_markdown(video_path, prompt, model, result):
+    """Export analysis result to a markdown file."""
+    if is_youtube_url(video_path):
+        # Extract video ID from YouTube URL
+        match = re.search(r'(?:v=|youtu\.be/|shorts/)([a-zA-Z0-9_-]+)', video_path)
+        stem = match.group(1) if match else "youtube_video"
+        source_line = f"**Source:** [{video_path}]({video_path})"
+    else:
+        stem = os.path.splitext(os.path.basename(video_path))[0]
+        source_line = f"**Source:** `{os.path.basename(video_path)}`"
+
+    filename = f"{stem}.md"
+
+    from merleau import __version__
+    lines = [
+        f"# Video Analysis: {stem}",
+        "",
+        source_line,
+        f"**Analyzed with:** ponty (merleau v{__version__}) | {model}",
+        f"**Cost:** ${result.total_cost:.4f} | {result.prompt_tokens:,} prompt tokens | {result.response_tokens:,} response tokens",
+        "",
+        "---",
+        "",
+        result.text,
+    ]
+
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+    return filename
+
+
+def analyze(video_path, prompt, model, show_cost, export=None):
     """Analyze a video file or YouTube URL using Gemini (CLI wrapper)."""
     try:
         youtube = is_youtube_url(video_path)
@@ -196,6 +228,10 @@ def analyze(video_path, prompt, model, show_cost):
             print(f"  Output: ${result.output_cost:.6f}")
             print(f"  Total:  ${result.total_cost:.6f}")
 
+        if export == "md":
+            filename = export_markdown(video_path, prompt, model, result)
+            print(f"\nExported to {filename}")
+
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -237,6 +273,11 @@ def main():
         action="store_true",
         help="Hide usage and cost information"
     )
+    parser.add_argument(
+        "-e", "--export",
+        choices=["md"],
+        help="Export analysis to file (supported formats: md)"
+    )
 
     args = parser.parse_args()
 
@@ -244,7 +285,7 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    analyze(args.video, args.prompt, args.model, show_cost=not args.no_cost)
+    analyze(args.video, args.prompt, args.model, show_cost=not args.no_cost, export=args.export)
 
 
 if __name__ == "__main__":
