@@ -82,7 +82,10 @@ with tab3:
     3. **Mac** — `Cmd + Shift + 5` → Screen Recording
     4. **Chrome** — Extensions like Loom or Screencastify
     """)
-    st.image("img/streamlit-screencast.png", caption="Streamlit's built-in screencast recorder")
+    import pathlib
+    img_path = pathlib.Path(__file__).parent / "img" / "streamlit-screencast.png"
+    if img_path.exists():
+        st.image(str(img_path), caption="Streamlit's built-in screencast recorder")
 
 # Prompt input
 st.divider()
