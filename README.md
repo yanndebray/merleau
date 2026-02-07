@@ -22,6 +22,23 @@ Google Gemini is the **only major AI provider** with native video understandingâ
 - **Multiple models** - Support for different Gemini models
 - **Web UI** - Streamlit app for browser-based analysis
 
+## Use cases
+
+### Clone apps
+
+Take a screencast of your app and ask:
+- "What are the main features of this app?"
+- "What are the main UI elements?"
+- "What are the main user flows?"
+
+### Extract code from a coding screencast
+
+```bash
+ponty https://www.youtube.com/watch?v=Be0ceKN81S8 -p "Extract the text in the first claude code session" -e md
+```
+
+![playwright-cli-claude-code](img/playwright-cli-claude-code.png)
+
 ## Installation
 
 Using [uv](https://docs.astral.sh/uv/) (recommended):
@@ -68,6 +85,8 @@ ponty video.mp4 --no-cost
 ### Web UI
 
 **Try it online:** https://merleau.streamlit.app/
+
+The web app supports both file uploads and YouTube URLs (paste a URL in the YouTube tab to preview and analyze directly).
 
 Or run locally:
 ```bash
