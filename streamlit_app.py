@@ -6,7 +6,7 @@ import tempfile
 import streamlit as st
 from dotenv import load_dotenv
 
-from merleau.cli import AnalysisResult, analyze_video
+from merleau.cli import AnalysisResult, analyze_video, is_youtube_url
 
 # Page config
 st.set_page_config(
@@ -49,7 +49,7 @@ with st.sidebar:
     """)
 
 # Main content
-tab1, tab2 = st.tabs(["📁 Upload Video", "🎬 Record Screen"])
+tab1, tab2, tab3 = st.tabs(["📁 Upload Video", "🔗 YouTube URL", "🎬 Record Screen"])
 
 with tab1:
     uploaded_file = st.file_uploader(
@@ -62,6 +62,18 @@ with tab1:
         st.video(uploaded_file)
 
 with tab2:
+    youtube_url = st.text_input(
+        "YouTube URL",
+        placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/...",
+        help="Paste a YouTube video URL to analyze directly"
+    )
+
+    if youtube_url and is_youtube_url(youtube_url):
+        st.video(youtube_url)
+    elif youtube_url:
+        st.warning("Please enter a valid YouTube URL.")
+
+with tab3:
     st.info("🎥 **Screen Recording** - Use your browser's built-in screen capture, then upload the recording above.")
     st.markdown("""
     **Quick recording options:**
@@ -85,28 +97,43 @@ with col1:
 with col2:
     show_cost = st.checkbox("Show cost", value=True)
 
+# Determine video source
+has_youtube = youtube_url and is_youtube_url(youtube_url)
+has_upload = uploaded_file is not None
+
 # Analysis
 if analyze_btn:
     if not api_key:
         st.error("Please enter your Gemini API key in the sidebar.")
-    elif not uploaded_file:
-        st.warning("Please upload a video file first.")
+    elif not has_upload and not has_youtube:
+        st.warning("Please upload a video file or enter a YouTube URL.")
     else:
-        # Save uploaded file to temp location
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp:
-            tmp.write(uploaded_file.getvalue())
-            tmp_path = tmp.name
+        tmp_path = None
+        if has_youtube:
+            video_source = youtube_url
+            source_name = youtube_url
+        else:
+            # Save uploaded file to temp location
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp:
+                tmp.write(uploaded_file.getvalue())
+                tmp_path = tmp.name
+            video_source = tmp_path
+            source_name = uploaded_file.name
 
         try:
             # Progress indicators
             progress_text = st.empty()
             progress_bar = st.progress(0)
 
-            progress_text.text("📤 Uploading video...")
+            if has_youtube:
+                progress_text.text("🔗 Sending YouTube URL to Gemini...")
+            else:
+                progress_text.text("📤 Uploading video...")
             progress_bar.progress(10)
 
             def on_upload(uri):
-                progress_text.text("⏳ Processing video...")
+                if not has_youtube:
+                    progress_text.text("⏳ Processing video...")
                 progress_bar.progress(30)
 
             processing_dots = [0]
@@ -120,7 +147,7 @@ if analyze_btn:
                 progress_bar.progress(80)
 
             result: AnalysisResult = analyze_video(
-                video_path=tmp_path,
+                video_path=video_source,
                 prompt=prompt,
                 model=model,
                 api_key=api_key,
@@ -153,7 +180,7 @@ if analyze_btn:
             if "history" not in st.session_state:
                 st.session_state.history = []
             st.session_state.history.append({
-                "filename": uploaded_file.name,
+                "filename": source_name,
                 "prompt": prompt,
                 "result": result.text,
                 "cost": result.total_cost,
@@ -163,7 +190,7 @@ if analyze_btn:
             st.error(f"Error: {e}")
         finally:
             # Cleanup temp file
-            if os.path.exists(tmp_path):
+            if tmp_path and os.path.exists(tmp_path):
                 os.unlink(tmp_path)
 
 # History section
