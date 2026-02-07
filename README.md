@@ -48,11 +48,18 @@ pip install merleau
 # Basic video analysis
 ponty video.mp4
 
+# Analyze a YouTube video directly
+ponty https://youtu.be/VIDEO_ID
+ponty https://www.youtube.com/watch?v=VIDEO_ID
+
 # Custom prompt
 ponty video.mp4 -p "Summarize the key points in this video"
 
 # Use a different model
 ponty video.mp4 -m gemini-2.0-flash
+
+# Export analysis to markdown
+ponty video.mp4 -e md
 
 # Hide cost information
 ponty video.mp4 --no-cost
@@ -74,7 +81,9 @@ streamlit run streamlit_app.py
 |--------|-------------|
 | `-p, --prompt` | Prompt for the analysis (default: "Explain what happens in this video") |
 | `-m, --model` | Gemini model to use (default: gemini-2.5-flash) |
+| `-e, --export` | Export analysis to file (supported formats: md) |
 | `--no-cost` | Hide usage and cost information |
+| `-V, --version` | Show version and exit |
 
 ## Reducing Costs with Compression
 
