@@ -5,7 +5,11 @@
 
 A CLI tool for video understanding using Google's Gemini API. Named after [Maurice Merleau-Ponty](https://en.wikipedia.org/wiki/Maurice_Merleau-Ponty), the phenomenologist philosopher whose work on perception inspires how this tool helps you perceive your videos.
 
-**[Website](https://yanndebray.github.io/merleau/)** · **[Web App](https://merleau.streamlit.app/)** · **[PyPI](https://pypi.org/project/merleau/)** · **[GitHub](https://github.com/yanndebray/merleau)**
+[![PyPI version](https://img.shields.io/pypi/v/merleau)](https://pypi.org/project/merleau/)
+[![Python](https://img.shields.io/pypi/pyversions/merleau)](https://pypi.org/project/merleau/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Streamlit App](https://img.shields.io/badge/Streamlit-App-ff4b4b?logo=streamlit&logoColor=white)](https://merleau.streamlit.app/)
+[![Website](https://img.shields.io/badge/Website-GitHub%20Pages-0891b2)](https://yanndebray.github.io/merleau/)
 
 https://github.com/user-attachments/assets/e2c5b476-ddab-49ab-a35c-9ae5e880c25c
 
