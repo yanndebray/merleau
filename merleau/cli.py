@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import re
 import sys
 import time
 from dataclasses import dataclass
@@ -9,6 +10,15 @@ from typing import Callable, Optional
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
+
+
+def is_youtube_url(path: str) -> bool:
+    """Check if the given path is a YouTube URL."""
+    return bool(re.match(
+        r'(https?://)?(www\.)?(youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)',
+        path
+    ))
 
 
 @dataclass
@@ -71,10 +81,10 @@ def analyze_video(
     on_analyzing: Optional[Callable] = None,
 ) -> AnalysisResult:
     """
-    Analyze a video file using Gemini.
+    Analyze a video file or YouTube URL using Gemini.
 
     Args:
-        video_path: Path to the video file
+        video_path: Path to the video file or YouTube URL
         prompt: Analysis prompt
         model: Gemini model to use
         api_key: Optional API key (falls back to env var)
@@ -95,21 +105,29 @@ def analyze_video(
     if not api_key:
         raise ValueError("GEMINI_API_KEY not found in environment or .env file")
 
-    if not os.path.exists(video_path):
-        raise ValueError(f"Video file not found: {video_path}")
-
     client = genai.Client(api_key=api_key)
 
-    # Upload video
-    myfile = client.files.upload(file=video_path)
-    if on_upload:
-        on_upload(myfile.uri)
+    if is_youtube_url(video_path):
+        # YouTube URL: pass directly to Gemini
+        video_part = types.Part.from_uri(file_uri=video_path, mime_type="video/mp4")
+        if on_upload:
+            on_upload(video_path)
+    else:
+        # Local file: upload to Gemini
+        if not os.path.exists(video_path):
+            raise ValueError(f"Video file not found: {video_path}")
 
-    # Wait for processing
-    myfile = wait_for_processing(client, myfile, on_progress=on_processing)
+        myfile = client.files.upload(file=video_path)
+        if on_upload:
+            on_upload(myfile.uri)
 
-    if myfile.state.name == "FAILED":
-        raise RuntimeError("File processing failed")
+        # Wait for processing
+        myfile = wait_for_processing(client, myfile, on_progress=on_processing)
+
+        if myfile.state.name == "FAILED":
+            raise RuntimeError("File processing failed")
+
+        video_part = myfile
 
     # Generate analysis
     if on_analyzing:
@@ -117,7 +135,7 @@ def analyze_video(
 
     response = client.models.generate_content(
         model=model,
-        contents=[myfile, prompt]
+        contents=[video_part, prompt]
     )
 
     # Extract usage info
@@ -136,13 +154,18 @@ def analyze_video(
 
 
 def analyze(video_path, prompt, model, show_cost):
-    """Analyze a video file using Gemini (CLI wrapper)."""
+    """Analyze a video file or YouTube URL using Gemini (CLI wrapper)."""
     try:
-        print(f"Uploading video: {video_path}")
+        youtube = is_youtube_url(video_path)
+        if youtube:
+            print(f"Analyzing YouTube video: {video_path}")
+        else:
+            print(f"Uploading video: {video_path}")
 
         def on_upload(uri):
-            print(f"Upload complete. File URI: {uri}")
-            print("Waiting for file to be processed...", end="")
+            if not youtube:
+                print(f"Upload complete. File URI: {uri}")
+                print("Waiting for file to be processed...", end="")
 
         def on_processing():
             print(".", end="", flush=True)
@@ -197,7 +220,7 @@ def main():
     parser.add_argument(
         "video",
         nargs="?",
-        help="Path to the video file to analyze"
+        help="Path to video file or YouTube URL to analyze"
     )
     parser.add_argument(
         "-p", "--prompt",
