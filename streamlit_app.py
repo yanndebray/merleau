@@ -74,13 +74,15 @@ with tab2:
         st.warning("Please enter a valid YouTube URL.")
 
 with tab3:
-    st.info("🎥 **Screen Recording** - Use your browser's built-in screen capture, then upload the recording above.")
+    st.info("🎥 **Screen Recording** - Record your screen, then upload the recording in the Upload tab.")
     st.markdown("""
     **Quick recording options:**
-    1. **Windows**: `Win + G` → Record
-    2. **Mac**: `Cmd + Shift + 5` → Screen Recording
-    3. **Chrome**: Extensions like Loom or Screencastify
+    1. **Streamlit built-in** — Click the screencast button in the bottom-right corner of this app
+    2. **Windows** — `Win + G` → Record
+    3. **Mac** — `Cmd + Shift + 5` → Screen Recording
+    4. **Chrome** — Extensions like Loom or Screencastify
     """)
+    st.image("img/streamlit-screencast.png", caption="Streamlit's built-in screencast recorder")
 
 # Prompt input
 st.divider()
