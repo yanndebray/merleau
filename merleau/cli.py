@@ -183,12 +183,20 @@ def analyze(video_path, prompt, model, show_cost):
 
 def main():
     """Main entry point for the CLI."""
+    from merleau import __version__
+
     parser = argparse.ArgumentParser(
         prog="ponty",
         description="Analyze videos using Google's Gemini API"
     )
     parser.add_argument(
+        "-V", "--version",
+        action="version",
+        version=f"%(prog)s {__version__}"
+    )
+    parser.add_argument(
         "video",
+        nargs="?",
         help="Path to the video file to analyze"
     )
     parser.add_argument(
@@ -208,6 +216,11 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.video is None:
+        parser.print_help()
+        sys.exit(1)
+
     analyze(args.video, args.prompt, args.model, show_cost=not args.no_cost)
 
 
