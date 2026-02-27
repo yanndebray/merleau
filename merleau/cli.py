@@ -8,7 +8,7 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 from google import genai
 from google.genai import types
 
@@ -99,7 +99,7 @@ def analyze_video(
         ValueError: If API key not found or file doesn't exist
         RuntimeError: If file processing fails
     """
-    load_dotenv()
+    load_dotenv(find_dotenv(usecwd=True))
 
     api_key = api_key or os.getenv("GEMINI_API_KEY")
     if not api_key:
