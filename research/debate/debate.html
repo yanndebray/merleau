@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Great AI Debate: Claude vs Codex vs Gemini</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0d1117;--surface:#161b22;--surface2:#1c2333;--surface3:#21283b;
+    --border:#30363d;--text:#e6edf3;--text-muted:#8b949e;
+    --claude:#f97316;--claude-bg:rgba(249,115,22,.1);--claude-border:rgba(249,115,22,.3);
+    --codex:#22c55e;--codex-bg:rgba(34,197,94,.1);--codex-border:rgba(34,197,94,.3);
+    --gemini:#3b82f6;--gemini-bg:rgba(59,130,246,.1);--gemini-border:rgba(59,130,246,.3);
+    --radius:12px;--radius-sm:8px;
+  }
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+  a{color:var(--gemini);text-decoration:none}
+
+  /* Hero */
+  .hero{text-align:center;padding:80px 24px 60px;background:linear-gradient(180deg,#0d1117 0%,#131a27 100%);position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(249,115,22,.06) 0%,transparent 50%),radial-gradient(circle at 70% 60%,rgba(59,130,246,.06) 0%,transparent 50%),radial-gradient(circle at 50% 50%,rgba(34,197,94,.04) 0%,transparent 50%);animation:drift 20s ease-in-out infinite}
+  @keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(-2%,1%)}}
+  .hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-.02em;margin-bottom:16px;background:linear-gradient(135deg,var(--claude),var(--codex),var(--gemini));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .hero p{font-size:clamp(1rem,2vw,1.25rem);color:var(--text-muted);max-width:700px;margin:0 auto}
+  .hero .tagline{margin-top:24px;font-style:italic;color:var(--text-muted);font-size:.95rem}
+
+  /* Layout */
+  .container{max-width:1200px;margin:0 auto;padding:0 24px}
+  section{padding:60px 0}
+  .section-title{font-size:1.75rem;font-weight:700;margin-bottom:8px;text-align:center}
+  .section-subtitle{color:var(--text-muted);text-align:center;margin-bottom:40px;font-size:.95rem}
+
+  /* Agent Cards */
+  .agent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}
+  .agent-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+  .agent-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+  .agent-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .agent-card.claude::before{background:var(--claude)}.agent-card.codex::before{background:var(--codex)}.agent-card.gemini::before{background:var(--gemini)}
+  .agent-name{font-size:1.35rem;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .agent-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .claude .agent-dot{background:var(--claude)}.codex .agent-dot{background:var(--codex)}.gemini .agent-dot{background:var(--gemini)}
+  .agent-focus{font-size:.85rem;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em}
+  .agent-contribution{font-size:.95rem;margin-bottom:16px;color:var(--text)}
+  .agent-quote{font-style:italic;font-size:.9rem;color:var(--text-muted);border-left:3px solid var(--border);padding-left:14px;line-height:1.5}
+  .claude .agent-quote{border-color:var(--claude)}.codex .agent-quote{border-color:var(--codex)}.gemini .agent-quote{border-color:var(--gemini)}
+
+  /* Attack Matrix */
+  .matrix-wrapper{overflow-x:auto}
+  .matrix{display:grid;grid-template-columns:120px repeat(3,1fr);gap:2px;max-width:800px;margin:0 auto;background:var(--border);border-radius:var(--radius);overflow:hidden}
+  .matrix-cell{background:var(--surface);padding:16px;min-height:80px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.85rem;cursor:default;transition:background .2s}
+  .matrix-header{background:var(--surface2);font-weight:700;font-size:.9rem;padding:14px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .matrix-row-header{background:var(--surface2);font-weight:700;font-size:.9rem;justify-content:flex-start;padding-left:16px;gap:6px}
+  .matrix-empty{background:var(--surface3);color:var(--text-muted);font-style:italic;font-size:.8rem}
+  .matrix-attack{cursor:pointer;position:relative}
+  .matrix-attack:hover{background:var(--surface3)}
+  .matrix-attack .peek{font-weight:600;font-size:.8rem;line-height:1.4}
+  .attack-count{display:inline-block;background:rgba(255,255,255,.08);border-radius:20px;padding:2px 10px;font-size:.75rem;margin-top:6px;color:var(--text-muted)}
+
+  /* Attack Modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)}
+  .modal-overlay.active{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);max-width:700px;width:100%;max-height:80vh;overflow-y:auto;padding:32px;position:relative}
+  .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;line-height:1;padding:4px}
+  .modal-close:hover{color:var(--text)}
+  .modal h3{font-size:1.2rem;margin-bottom:16px}
+  .modal .attack-item{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+  .modal .attack-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .modal .attack-label{font-weight:700;font-size:.9rem;margin-bottom:8px}
+  .modal blockquote{font-style:italic;font-size:.9rem;color:var(--text-muted);border-left:3px solid var(--border);padding-left:14px;line-height:1.6}
+
+  /* Concessions */
+  .concession-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}
+  .concession-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .concession-header{padding:16px 20px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;transition:background .2s}
+  .concession-header:hover{background:var(--surface2)}
+  .concession-header h4{font-size:.95rem;font-weight:600}
+  .concession-arrow{transition:transform .3s;color:var(--text-muted);font-size:.8rem}
+  .concession-card.open .concession-arrow{transform:rotate(180deg)}
+  .concession-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+  .concession-card.open .concession-body{max-height:600px}
+  .concession-content{padding:0 20px 20px}
+  .concession-content p{font-size:.9rem;margin-bottom:10px}
+  .concession-content blockquote{font-style:italic;font-size:.85rem;color:var(--text-muted);border-left:3px solid var(--border);padding-left:12px;line-height:1.5}
+  .badge{display:inline-block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:4px;margin-right:6px}
+  .badge-claude{background:var(--claude-bg);color:var(--claude);border:1px solid var(--claude-border)}
+  .badge-codex{background:var(--codex-bg);color:var(--codex);border:1px solid var(--codex-border)}
+  .badge-gemini{background:var(--gemini-bg);color:var(--gemini);border:1px solid var(--gemini-border)}
+
+  /* Consensus Shifts */
+  .timeline{position:relative;max-width:800px;margin:0 auto}
+  .timeline::before{content:'';position:absolute;left:28px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--claude),var(--codex),var(--gemini))}
+  .shift-card{position:relative;margin-bottom:32px;margin-left:64px}
+  .shift-number{position:absolute;left:-52px;top:6px;width:36px;height:36px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;z-index:1}
+  .shift-card:nth-child(1) .shift-number{border-color:var(--claude);color:var(--claude)}
+  .shift-card:nth-child(2) .shift-number{border-color:var(--codex);color:var(--codex)}
+  .shift-card:nth-child(3) .shift-number{border-color:var(--gemini);color:var(--gemini)}
+  .shift-card:nth-child(4) .shift-number{border-color:var(--claude);color:var(--claude)}
+  .shift-card:nth-child(5) .shift-number{border-color:var(--codex);color:var(--codex)}
+  .shift-inner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+  .shift-title{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+  .shift-from-to{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;margin-bottom:14px;font-size:.85rem}
+  .shift-from{background:rgba(255,255,255,.03);border-radius:var(--radius-sm);padding:10px 14px;border:1px solid rgba(255,255,255,.05)}
+  .shift-to{background:rgba(34,197,94,.05);border-radius:var(--radius-sm);padding:10px 14px;border:1px solid rgba(34,197,94,.15)}
+  .shift-arrow-col{display:flex;align-items:center;font-size:1.2rem;color:var(--text-muted)}
+  .shift-label{font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px}
+  .shift-quote{font-style:italic;font-size:.85rem;color:var(--text-muted);border-left:3px solid var(--border);padding-left:12px;margin-top:10px;line-height:1.5}
+
+  /* Unresolved Disagreement */
+  .vs-section{max-width:900px;margin:0 auto}
+  .vs-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:start}
+  .vs-side{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
+  .vs-center{display:flex;align-items:center;justify-content:center;padding-top:40px}
+  .vs-badge{font-size:2rem;font-weight:900;color:var(--text-muted);text-shadow:0 0 30px rgba(255,255,255,.1)}
+  .vs-side h3{font-size:1.15rem;font-weight:700;margin-bottom:6px}
+  .vs-side .vs-advocates{font-size:.85rem;color:var(--text-muted);margin-bottom:16px}
+  .vs-side ul{list-style:none;padding:0}
+  .vs-side ul li{font-size:.9rem;padding:6px 0;padding-left:16px;position:relative}
+  .vs-side ul li::before{content:'\2022';position:absolute;left:0;color:var(--text-muted)}
+  .vs-side blockquote{font-style:italic;font-size:.85rem;color:var(--text-muted);border-left:3px solid var(--border);padding-left:12px;margin-top:14px;line-height:1.5}
+  .vs-specs{border-top:3px solid var(--claude)}
+  .vs-code{border-top:3px solid var(--codex)}
+  .vs-verdict{text-align:center;margin-top:32px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);max-width:600px;margin-left:auto;margin-right:auto;font-size:.9rem;color:var(--text-muted)}
+
+  /* Bottom Line */
+  .bottom-line{text-align:center;max-width:800px;margin:0 auto}
+  .bottom-line .pipeline{font-family:monospace;font-size:1.1rem;color:var(--text);background:var(--surface);padding:20px;border-radius:var(--radius-sm);margin:24px 0;letter-spacing:.02em;border:1px solid var(--border)}
+  .bottom-line .one-liner{font-size:1.5rem;font-weight:700;margin:28px 0;background:linear-gradient(135deg,var(--claude),var(--gemini));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .bottom-line blockquote{font-style:italic;font-size:1rem;color:var(--text-muted);max-width:700px;margin:0 auto;line-height:1.7;border-left:3px solid var(--border);padding-left:20px;text-align:left}
+  .bottom-line .stats{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-top:40px}
+  .stat{text-align:center}
+  .stat-num{font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--claude),var(--codex));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .stat-label{font-size:.8rem;color:var(--text-muted);margin-top:2px}
+
+  /* Nav */
+  .nav{position:sticky;top:0;z-index:100;background:rgba(13,17,23,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px}
+  .nav-inner{max-width:1200px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+  .nav-inner::-webkit-scrollbar{display:none}
+  .nav a{color:var(--text-muted);font-size:.82rem;padding:12px 14px;white-space:nowrap;transition:color .2s;border-bottom:2px solid transparent}
+  .nav a:hover,.nav a.active{color:var(--text);border-bottom-color:var(--claude)}
+
+  /* Responsive */
+  @media(max-width:768px){
+    .vs-grid{grid-template-columns:1fr;gap:16px}
+    .vs-center{padding:0}
+    .matrix{grid-template-columns:80px repeat(3,1fr);font-size:.8rem}
+    .shift-card{margin-left:52px}
+    .agent-grid{grid-template-columns:1fr}
+    .concession-grid{grid-template-columns:1fr}
+    .bottom-line .stats{gap:24px}
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#agents">Agents</a>
+    <a href="#attacks">Attack Matrix</a>
+    <a href="#concessions">Concessions</a>
+    <a href="#consensus">Consensus Shifts</a>
+    <a href="#unresolved">The Divide</a>
+    <a href="#bottomline">Bottom Line</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero">
+  <h1>The Great AI Debate</h1>
+  <p>Three agents research Merleau's Video-to-Spec SaaS &mdash; then challenge each other</p>
+  <p class="tagline">Claude vs Codex vs Gemini &bull; Independent deep research &bull; Structured adversarial debate</p>
+</header>
+
+<!-- Agent Cards -->
+<section id="agents">
+  <div class="container">
+    <h2 class="section-title">The Researchers</h2>
+    <p class="section-subtitle">Each agent conducted independent deep research, then reviewed the others' work</p>
+    <div class="agent-grid">
+
+      <div class="agent-card claude">
+        <div class="agent-name"><span class="agent-dot"></span>Claude</div>
+        <div class="agent-focus">AI Coding Landscape &amp; Competitive Positioning</div>
+        <p class="agent-contribution">Built the competitive landscape from first principles with systematic mapping of every major coding agent. Identified the spec-driven development (SDD) convergence across the entire industry. Provided granular technical comparison of screenshot-to-code versus native video understanding with cost analysis.</p>
+        <blockquote class="agent-quote">"The entire industry is converging on specifications as the interface between human intent and AI code generation. The gap between PRD and code is solved and commoditizing. The gap between video and PRD is unsolved &mdash; that's where the moat lives."</blockquote>
+      </div>
+
+      <div class="agent-card codex">
+        <div class="agent-name"><span class="agent-dot"></span>Codex</div>
+        <div class="agent-focus">Target Segments &amp; Personas (Demand Side)</div>
+        <p class="agent-contribution">Concrete legacy system examples with dollar figures &mdash; application modernization market at $20.55B in 2025, growing to $81.24B by 2034. Named specific systems (SAP GUI, Oracle Forms, AS/400 green screens) with detailed workflows and pain points. Created persona analysis mapping current workflows to willingness-to-pay.</p>
+        <blockquote class="agent-quote">"Neither Claude nor Gemini got their hands dirty on the demand side. But neither report answers the most basic question a founder should ask first: who specifically will pay for this, and why do they need video instead of screenshots?"</blockquote>
+      </div>
+
+      <div class="agent-card gemini">
+        <div class="agent-name"><span class="agent-dot"></span>Gemini</div>
+        <div class="agent-focus">Strategy, Business Model &amp; Risks</div>
+        <p class="agent-contribution">Rigorous risk analysis with probability-weighted timelines. Calculated unit economics: $0.01&ndash;$0.03 per 5-minute screencast, yielding 97%+ gross margin at $29/month. Identified the "thin wrapper" existential risk and the Figma analogy as strategic frame. Only report to address IP and legal risk of "app cloning" with specificity.</p>
+        <blockquote class="agent-quote">"Neither Claude nor Codex grappled seriously with the single most important question facing Merleau: what happens when the moat evaporates?"</blockquote>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Attack Matrix -->
+<section id="attacks" style="background:var(--surface2)">
+  <div class="container">
+    <h2 class="section-title">The Attack Matrix</h2>
+    <p class="section-subtitle">Click any cell to see the full critiques</p>
+    <div class="matrix-wrapper">
+      <div class="matrix">
+        <!-- Header row -->
+        <div class="matrix-cell matrix-header" style="background:var(--surface3)">Target &rarr;</div>
+        <div class="matrix-cell matrix-header"><span class="agent-dot" style="background:var(--claude);width:8px;height:8px;display:inline-block;border-radius:50"></span> Claude</div>
+        <div class="matrix-cell matrix-header"><span class="agent-dot" style="background:var(--codex);width:8px;height:8px;display:inline-block;border-radius:50"></span> Codex</div>
+        <div class="matrix-cell matrix-header"><span class="agent-dot" style="background:var(--gemini);width:8px;height:8px;display:inline-block;border-radius:50"></span> Gemini</div>
+
+        <!-- Claude's row -->
+        <div class="matrix-cell matrix-row-header"><span class="agent-dot" style="background:var(--claude);width:8px;height:8px;display:inline-block;border-radius:50;flex-shrink:0"></span> Claude</div>
+        <div class="matrix-cell matrix-empty">&mdash;</div>
+        <div class="matrix-cell matrix-attack" onclick="openModal('claude-codex')">
+          <div><div class="peek">Legacy Overweight &amp; Strategic Incoherence</div><div class="attack-count">2 attacks</div></div>
+        </div>
+        <div class="matrix-cell matrix-attack" onclick="openModal('claude-gemini')">
+          <div><div class="peek">Over-Optimistic Mitigation &amp; Hand-Wavy Moats</div><div class="attack-count">3 attacks</div></div>
+        </div>
+
+        <!-- Codex's row -->
+        <div class="matrix-cell matrix-row-header"><span class="agent-dot" style="background:var(--codex);width:8px;height:8px;display:inline-block;border-radius:50;flex-shrink:0"></span> Codex</div>
+        <div class="matrix-cell matrix-attack" onclick="openModal('codex-claude')">
+          <div><div class="peek">Supply Side Bias &amp; Underestimated Costs</div><div class="attack-count">3 attacks</div></div>
+        </div>
+        <div class="matrix-cell matrix-empty">&mdash;</div>
+        <div class="matrix-cell matrix-attack" onclick="openModal('codex-gemini')">
+          <div><div class="peek">Buried Legal Insight &amp; Aspirational Moats</div><div class="attack-count">3 attacks</div></div>
+        </div>
+
+        <!-- Gemini's row -->
+        <div class="matrix-cell matrix-row-header"><span class="agent-dot" style="background:var(--gemini);width:8px;height:8px;display:inline-block;border-radius:50;flex-shrink:0"></span> Gemini</div>
+        <div class="matrix-cell matrix-attack" onclick="openModal('gemini-claude')">
+          <div><div class="peek">Dangerous Vacuum Claim &amp; Barrier Understated</div><div class="attack-count">2 attacks</div></div>
+        </div>
+        <div class="matrix-cell matrix-attack" onclick="openModal('gemini-codex')">
+          <div><div class="peek">Strategic Error on GTM &amp; Code Contradiction</div><div class="attack-count">3 attacks</div></div>
+        </div>
+        <div class="matrix-cell matrix-empty">&mdash;</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Attack Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-content" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <h3 id="modal-title"></h3>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Concessions -->
+<section id="concessions">
+  <div class="container">
+    <h2 class="section-title">Concessions</h2>
+    <p class="section-subtitle">What each agent admitted the others got right</p>
+    <div class="concession-grid">
+
+      <!-- Claude's concessions -->
+      <div class="concession-card" onclick="toggleConcession(this)">
+        <div class="concession-header">
+          <h4><span class="badge badge-claude">Claude</span> admitted to <span class="badge badge-codex">Codex</span></h4>
+          <span class="concession-arrow">&#9660;</span>
+        </div>
+        <div class="concession-body"><div class="concession-content">
+          <p><strong>Concrete Examples:</strong> "My report stayed abstract. Codex named the specific SAP transaction code (ME21N). That level of specificity is what turns strategy into execution."</p>
+          <blockquote>"Codex's concrete examples are the report's best contribution. The fifteen app examples &mdash; from insurance quote forms to dental practice management software to AS/400 green screen order entry &mdash; are exactly what a product team needs."</blockquote>
+          <br>
+          <p><strong>Persona Analysis:</strong> "Codex showed what their Monday morning looks like. The 'vocabulary gap' insight for non-coders is a sharper articulation of the value proposition than anything in my report."</p>
+        </div></div>
+      </div>
+
+      <div class="concession-card" onclick="toggleConcession(this)">
+        <div class="concession-header">
+          <h4><span class="badge badge-claude">Claude</span> admitted to <span class="badge badge-gemini">Gemini</span></h4>
+          <span class="concession-arrow">&#9660;</span>
+        </div>
+        <div class="concession-body"><div class="concession-content">
+          <p><strong>Legal Analysis:</strong> "For a product whose core use case is literally 'clone this other company's app,' my report never mentions legal risk. That is a significant oversight."</p>
+          <blockquote>"Gemini's recommendation to 'frame as inspiration and analysis, not cloning' and to position as a 'video analysis and specification platform' rather than an 'app cloner' is strategically important."</blockquote>
+          <br>
+          <p><strong>Pricing Model:</strong> "Gemini's pricing model is more developed. The per-analysis pricing model is smarter than per-token, and Gemini articulated why."</p>
+        </div></div>
+      </div>
+
+      <div class="concession-card" onclick="toggleConcession(this)">
+        <div class="concession-header">
+          <h4><span class="badge badge-codex">Codex</span> admitted to <span class="badge badge-claude">Claude</span></h4>
+          <span class="concession-arrow">&#9660;</span>
+        </div>
+        <div class="concession-body"><div class="concession-content">
+          <p><strong>Architecture &amp; Integration:</strong> "Claude's hybrid architecture (Option C) with its phased rollout is cleanly articulated, well-reasoned, and correctly sequenced. My report did not address integration architecture at all."</p>
+          <br>
+          <p><strong>SDD Trend:</strong> "Claude's identification of spec-driven development as an industry trend is a critical insight I missed. The convergence on 'plan then build' means Merleau's spec output is the native input format every major coding agent is designed to consume."</p>
+        </div></div>
+      </div>
+
+      <div class="concession-card" onclick="toggleConcession(this)">
+        <div class="concession-header">
+          <h4><span class="badge badge-codex">Codex</span> admitted to <span class="badge badge-gemini">Gemini</span></h4>
+          <span class="concession-arrow">&#9660;</span>
+        </div>
+        <div class="concession-body"><div class="concession-content">
+          <p><strong>Risk Analysis:</strong> "The 'thin wrapper' risk is existential and Gemini names it clearly: 'If your startup is just a wrapper, you risk being obsolete in 6 months.'"</p>
+          <br>
+          <p><strong>Pricing Realism:</strong> "Gemini's tiered pricing ($29/month Pro, $49/user/month Team, custom Enterprise) is better calibrated to market norms and includes the unit economics math. This level of financial specificity is what a founder needs."</p>
+        </div></div>
+      </div>
+
+      <div class="concession-card" onclick="toggleConcession(this)">
+        <div class="concession-header">
+          <h4><span class="badge badge-gemini">Gemini</span> admitted to <span class="badge badge-claude">Claude</span></h4>
+          <span class="concession-arrow">&#9660;</span>
+        </div>
+        <div class="concession-body"><div class="concession-content">
+          <p><strong>Landscape Overview:</strong> "Claude's report is the best of the three as a landscape overview. My report jumped straight to strategic analysis without adequately mapping the ecosystem."</p>
+          <br>
+          <p><strong>Stitch Competitor:</strong> "Claude identified a competitor I missed: Stitch by Google Labs. If Google Labs is already building in adjacent space, the probability of Google productizing a video-to-spec tool just went up."</p>
+        </div></div>
+      </div>
+
+      <div class="concession-card" onclick="toggleConcession(this)">
+        <div class="concession-header">
+          <h4><span class="badge badge-gemini">Gemini</span> admitted to <span class="badge badge-codex">Codex</span></h4>
+          <span class="concession-arrow">&#9660;</span>
+        </div>
+        <div class="concession-body"><div class="concession-content">
+          <p><strong>Legacy Modernization Gold Mine:</strong> "This is the single most important insight across all three reports that I underweighted. The $81 billion legacy modernization market does not care about $29/month developer subscriptions."</p>
+          <blockquote>"Codex's insight that government legacy systems 'often have no documentation, no source code access, and no original developers available' and that 'the only way to understand what the system does may be to record someone using it' is a perfect product-market fit argument. Video is not just a better input modality &mdash; it is the only viable input modality."</blockquote>
+          <br>
+          <p><strong>Persona Nuance &amp; Concrete Examples:</strong> "The 'same engine, different interface' framing is elegant and practical. A pitch deck drawing from Codex's examples would be more compelling than one drawing from my strategic frameworks."</p>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Consensus Shifts -->
+<section id="consensus" style="background:var(--surface2)">
+  <div class="container">
+    <h2 class="section-title">Five Consensus Shifts</h2>
+    <p class="section-subtitle">How the collective position evolved through debate</p>
+    <div class="timeline">
+
+      <div class="shift-card">
+        <div class="shift-number">1</div>
+        <div class="shift-inner">
+          <div class="shift-title">Kill the Word "Clone"</div>
+          <div class="shift-from-to">
+            <div class="shift-from"><div class="shift-label">Before</div>All three reports used "app cloning" terminology liberally</div>
+            <div class="shift-arrow-col">&rarr;</div>
+            <div class="shift-to"><div class="shift-label">After</div>Unanimous: reposition as "video analysis and specification platform"</div>
+          </div>
+          <div class="shift-quote">"The product should never use the word 'clone.' The positioning is 'video-to-spec' or 'screencast analysis for development.' 'Cloning' implies commoditization and invites dismissal. 'Analysis' implies intelligence and invites premium pricing." &mdash; Gemini</div>
+        </div>
+      </div>
+
+      <div class="shift-card">
+        <div class="shift-number">2</div>
+        <div class="shift-inner">
+          <div class="shift-title">Parallel Enterprise Track</div>
+          <div class="shift-from-to">
+            <div class="shift-from"><div class="shift-label">Before</div>"Start with developers, expand to enterprise later" (sequential)</div>
+            <div class="shift-arrow-col">&rarr;</div>
+            <div class="shift-to"><div class="shift-label">After</div>Run two parallel tracks from day one: PLG dev tool AND enterprise legacy modernization</div>
+          </div>
+          <div class="shift-quote">"The biggest strategic error across all three reports is treating 'developer tool' and 'enterprise legacy modernization' as the same product with the same GTM. They are not." &mdash; Codex</div>
+        </div>
+      </div>
+
+      <div class="shift-card">
+        <div class="shift-number">3</div>
+        <div class="shift-inner">
+          <div class="shift-title">Moat Is Thinner Than Claimed</div>
+          <div class="shift-from-to">
+            <div class="shift-from"><div class="shift-label">Before</div>Each report claimed different defensibility sources</div>
+            <div class="shift-arrow-col">&rarr;</div>
+            <div class="shift-to"><div class="shift-label">After</div>Honest assessment: moat is thin and temporal. Real defensibility = speed + integrations + data</div>
+          </div>
+          <div class="shift-quote">"The data flywheel is the only real moat, and all three reports underinvest in it. Everything else (integrations, brand, community) is replicable." &mdash; Gemini</div>
+        </div>
+      </div>
+
+      <div class="shift-card">
+        <div class="shift-number">4</div>
+        <div class="shift-inner">
+          <div class="shift-title">Narration Is the Killer Feature</div>
+          <div class="shift-from-to">
+            <div class="shift-from"><div class="shift-label">Before</div>Video understanding treated as primarily visual</div>
+            <div class="shift-arrow-col">&rarr;</div>
+            <div class="shift-to"><div class="shift-label">After</div>Audio-visual fusion with narration capture as the most convincing differentiator</div>
+          </div>
+          <div class="shift-quote">"That narration captures intent and business logic that is invisible in the UI. No screenshot tool, no frame extraction approach, and no competitor without native audio processing can replicate this. The narration capability should be the #1 feature in every demo." &mdash; Codex</div>
+        </div>
+      </div>
+
+      <div class="shift-card">
+        <div class="shift-number">5</div>
+        <div class="shift-inner">
+          <div class="shift-title">Spec Editing Workflow Is Not an Afterthought</div>
+          <div class="shift-from-to">
+            <div class="shift-from"><div class="shift-label">Before</div>Focus solely on generation quality</div>
+            <div class="shift-arrow-col">&rarr;</div>
+            <div class="shift-to"><div class="shift-label">After</div>Spec correction workflow must be a core MVP feature</div>
+          </div>
+          <div class="shift-quote">"What happens when the spec is wrong? The product needs a spec editing and correction workflow &mdash; a way for users to review, annotate, and fix the generated spec before sending it downstream. None of us designed this. It should be a core feature of the MVP." &mdash; Claude</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Unresolved Disagreement -->
+<section id="unresolved">
+  <div class="container">
+    <h2 class="section-title">The Unresolved Disagreement</h2>
+    <p class="section-subtitle">The one question the debate could not settle</p>
+    <div class="vs-section">
+      <div class="vs-grid">
+
+        <div class="vs-side vs-specs">
+          <h3>Specs First</h3>
+          <div class="vs-advocates"><span class="badge badge-claude">Claude</span> <span class="badge badge-gemini">Gemini</span></div>
+          <ul>
+            <li>Phase 1 outputs only specs (PRDs, component inventories, flow diagrams)</li>
+            <li>Avoid competing with Lovable ($6.6B), Bolt ($700M), Cursor ($500M ARR) on code</li>
+            <li>Build integrations to downstream code gen platforms</li>
+            <li>Focus moat on understanding, not generation</li>
+          </ul>
+          <blockquote>"If your Phase 1 product generates React components, you are competing with v0, Lovable, and Bolt on code quality from day one. The whole point of the spec-first approach is to avoid that fight."<br>&mdash; Claude</blockquote>
+        </div>
+
+        <div class="vs-center">
+          <div class="vs-badge">VS</div>
+        </div>
+
+        <div class="vs-side vs-code">
+          <h3>Code First</h3>
+          <div class="vs-advocates"><span class="badge badge-codex">Codex</span></div>
+          <ul>
+            <li>Phase 1 should target coders with code output (React/Next.js, Tailwind)</li>
+            <li>Specs don't go viral &mdash; working apps do</li>
+            <li>The "wow factor" drives early PLG adoption</li>
+            <li>Risk ceding the viral moment by launching with documents</li>
+          </ul>
+          <blockquote>"A spec document does not go viral. A working app cloned from a 30-second video does. The viral demos that actually get shared on Twitter are working apps generated from a single input."<br>&mdash; Codex</blockquote>
+        </div>
+
+      </div>
+      <div class="vs-verdict">
+        Debate ended 2-to-1 for specs-first, but Codex's viral adoption argument remained unaddressed. The synthesis adopted specs-first while acknowledging the tension.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Bottom Line -->
+<section id="bottomline" style="background:var(--surface2)">
+  <div class="container">
+    <h2 class="section-title">The Bottom Line</h2>
+    <p class="section-subtitle">Where three independent analyses converged</p>
+    <div class="bottom-line">
+      <div class="pipeline">Video (unstructured) &rarr; <strong>Merleau</strong> (understanding) &rarr; Specs (structured) &rarr; Any coding tool (generation)</div>
+      <div class="one-liner">"Show us any app. We'll write the blueprint."</div>
+      <blockquote>"Merleau's real opportunity is not building a better screenshot-to-code tool with video input. It is becoming the standard interface between human-demonstrated workflows and the entire AI coding ecosystem &mdash; the Figma of video understanding for software development. That requires owning the spec layer, not the code generation layer, and building data assets that compound over time."<br><br>&mdash; Gemini (final synthesis)</blockquote>
+      <div class="stats">
+        <div class="stat"><div class="stat-num">55</div><div class="stat-label">Direct Attacks</div></div>
+        <div class="stat"><div class="stat-num">12</div><div class="stat-label">Concessions Made</div></div>
+        <div class="stat"><div class="stat-num">5</div><div class="stat-label">Consensus Shifts</div></div>
+        <div class="stat"><div class="stat-num">1</div><div class="stat-label">Unresolved Split</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="text-align:center;padding:40px 24px;color:var(--text-muted);font-size:.8rem;border-top:1px solid var(--border)">
+  Multi-agent debate orchestrated by Claude &bull; Independent research by Claude, OpenAI Codex, and Google Gemini &bull; Built with zero dependencies
+</footer>
+
+<script>
+// Attack data
+const attacks = {
+  'claude-codex': {
+    title: 'Claude \u2192 Codex',
+    items: [
+      {
+        label: 'Legacy Modernization Overweight',
+        quote: 'Codex overweights the legacy modernization narrative. Nearly half of Codex\u2019s report is devoted to legacy systems: SAP GUI, Oracle Forms, AS/400 green screens, Lotus Notes. The market sizing is impressive \u2014 $81 billion by 2034 \u2014 but this is a trap for a startup. Enterprise legacy modernization involves 12\u201318 month sales cycles, compliance requirements, security audits, and procurement bureaucracy. A seed-stage product cannot lead with SAP modernization. The Bloomberg Terminal example is frankly absurd as an early target \u2014 you are not going to clone a Bloomberg Terminal from a screencast.'
+      },
+      {
+        label: 'Strategic Incoherence',
+        quote: 'Codex also makes a strategic error in its persona analysis by recommending \u201claunch targeting coders\u201d with code output as the Phase 1 deliverable. This directly contradicts the spec-first thesis that all three reports nominally endorse. If your Phase 1 product generates React components, you are competing with v0, Lovable, and Bolt on code quality from day one. Codex wants it both ways \u2014 spec-first strategy with code-first execution \u2014 and that incoherence would confuse the product roadmap.'
+      }
+    ]
+  },
+  'claude-gemini': {
+    title: 'Claude \u2192 Gemini',
+    items: [
+      {
+        label: 'Over-Optimistic Mitigation',
+        quote: 'Gemini\u2019s risk analysis is too neat. For Risk 1 (Lovable/Bolt add video upload), Gemini assigns \u201cHIGH (12\u201318 months)\u201d probability, which I agree with, but then argues that a purpose-built tool will produce higher-quality specs. This is the same argument every startup makes before a platform eats their feature. Lovable has $200M+ ARR and can hire a team of 20 to build video understanding that is 90% as good in three months.'
+      },
+      {
+        label: 'Hand-Wavy Data Flywheel',
+        quote: 'Gemini\u2019s treatment of the thin wrapper risk is the weakest section across all three reports. The five-point mitigation plan reads like a VC pitch deck, not an honest assessment. The data flywheel argument is particularly hand-wavy: \u201cEvery video analysis produces data about what makes a good spec.\u201d What data, specifically? How do you measure \u201csuccessful downstream code generation\u201d when the code is generated in a third-party tool you do not control?'
+      },
+      {
+        label: 'Kimi K2.5 Dismissal',
+        quote: 'Gemini correctly identifies Moonshot AI\u2019s Kimi K2.5 as a video-to-code direct competitor, but then dismisses it as \u201ca model rather than a product.\u201d This undersells the danger. Kimi K2.5 is open-source and Alibaba-backed. Any platform \u2014 Lovable, Bolt, a new entrant in Shenzhen \u2014 can wrap Kimi K2.5 in a product UI tomorrow.'
+      }
+    ]
+  },
+  'codex-claude': {
+    title: 'Codex \u2192 Claude',
+    items: [
+      {
+        label: 'Supply Side Bias',
+        quote: 'Claude overweights the competitive landscape and underweights demand signals. Claude\u2019s report is a thorough catalog of every coding agent, every low-code builder, and every screenshot-to-code tool on the market. It is the report of an analyst who studied the supply side exhaustively. But competitive landscapes do not build businesses \u2014 customer pain does.'
+      },
+      {
+        label: 'Strategic Hedging',
+        quote: 'Claude claims that \u201cend-to-end code generation is a trap\u201d and that the \u201cdefensible position is the input layer.\u201d This is stated as if it were settled fact, but the evidence is more ambiguous than Claude admits. The viral demos that actually get shared on Twitter are not spec documents \u2014 they are working apps generated from a single input. Claude\u2019s recommendation to avoid end-to-end code generation may be strategically correct, but it risks ceding the \u201cwow factor\u201d that drives early PLG adoption.'
+      },
+      {
+        label: 'Underestimated Costs',
+        quote: 'Claude claims video processing costs \u201c$0.11\u20130.32 per hour of video\u201d and uses this to argue for strong unit economics. But this only covers the Gemini API call. It does not include downstream LLM calls for structured specs, compute for rendering wireframes, storage costs, or integration maintenance overhead. The actual per-analysis cost is likely 3\u20135x higher, which narrows the margin at the proposed $5\u201320/analysis price point.'
+      }
+    ]
+  },
+  'codex-gemini': {
+    title: 'Codex \u2192 Gemini',
+    items: [
+      {
+        label: 'Legal Framing Buried',
+        quote: 'Gemini\u2019s section on IP and legal risk is the most thorough legal analysis of the three reports, and I credit them for that. But Gemini buries the most important legal insight: Merleau generates specs, not pixel-perfect replicas, which creates an abstraction layer that fundamentally changes the legal exposure. This should be front and center in the positioning, not buried in a risk mitigation subsection.'
+      },
+      {
+        label: 'Aspirational Moats',
+        quote: 'On moats, Gemini lists \u201cSpec Quality Data Loop,\u201d \u201cIntegration Ecosystem,\u201d and \u201cOpen-Source Community\u201d as Tier 1 moats. But these are aspirational, not actual moats. A data flywheel requires thousands of users before it becomes defensible. Integration ecosystems are only a moat if switching costs are high, and exporting a markdown spec has zero switching cost. Open-source community is a distribution channel, not a moat \u2014 screenshot-to-code has massive GitHub popularity but only $32.7K ARR and 166 paying customers.'
+      },
+      {
+        label: 'Wishful Thinking on Integration Defense',
+        quote: 'Gemini claims the risk of Lovable/Bolt adding video upload is \u201cHIGH (12\u201318 months)\u201d but then argues Merleau\u2019s \u201cdepth of understanding\u201d will be sufficient mitigation. This is wishful thinking. If Lovable adds a \u201cpaste a Loom link\u201d feature that produces even 70% of the spec quality Merleau offers, most users will never leave Lovable to use a separate tool.'
+      }
+    ]
+  },
+  'gemini-claude': {
+    title: 'Gemini \u2192 Claude',
+    items: [
+      {
+        label: 'Dangerous Competitive Vacuum Claim',
+        quote: 'Claude states: \u201cThe competitive landscape is empty. No one offers a dedicated video-to-specification product.\u201d This is dangerously misleading. Google already demonstrated the exact Merleau pipeline \u2014 video to spec to code \u2014 using Gemini 2.5 Pro. Kimi K2.5 turns video into working front-end code and is open-source. The landscape is not empty. It is early. There is a critical difference between those two statements.'
+      },
+      {
+        label: 'Thoughtworks Barrier Understated',
+        quote: 'Claude overstates the Thoughtworks precedent. Claude frames their \u201cBlack Box to Blueprint\u201d project as \u201conly a bespoke consulting engagement,\u201d implying it is far from productization. In reality, the Thoughtworks team used Gemini 2.5 Pro with a Playwright MCP agent \u2014 off-the-shelf tools. If a five-person consulting team can build this in two weeks with existing tools, the barrier to entry for competitors is lower than Claude implies.'
+      }
+    ]
+  },
+  'gemini-codex': {
+    title: 'Gemini \u2192 Codex',
+    items: [
+      {
+        label: 'Strategic Error on Dual-Market GTM',
+        quote: 'Codex produced an excellent catalog. The legacy system segments are well-researched with genuine domain expertise. The 15 concrete app examples are the most actionable artifact across all three reports. But Codex makes a fundamental strategic error: it recommends launching Phase 1 targeting developers with code output. This directly contradicts the strongest finding across all three reports \u2014 that end-to-end code generation is the wrong play.'
+      },
+      {
+        label: 'Code Generation Contradiction',
+        quote: 'Codex\u2019s own data shows that existing code generators capture \u201cmaybe 60\u201370% of the design, missing interaction patterns, state management, responsive behavior, and edge cases.\u201d If purpose-built code generators from Lovable and Bolt, with hundreds of millions in funding, only hit 60\u201370%, why would Merleau \u2014 a startup with a fraction of those resources \u2014 do better by tacking code generation onto video understanding?'
+      },
+      {
+        label: 'Thin Wrapper Underweighted',
+        quote: 'Claude mentions that the MCP server for Gemini video understanding already exists and \u201cbridges Gemini\u2019s video API into Claude Code\u2019s workflow.\u201d But Claude does not follow this thread to its conclusion: if anyone can pip-install a bridge between Gemini\u2019s video API and Claude Code, then Merleau\u2019s core pipeline is replicable in an afternoon.'
+      }
+    ]
+  }
+};
+
+// Modal logic
+function openModal(key) {
+  const data = attacks[key];
+  if (!data) return;
+  document.getElementById('modal-title').textContent = data.title;
+  const body = document.getElementById('modal-body');
+  body.innerHTML = data.items.map(item =>
+    '<div class="attack-item">' +
+    '<div class="attack-label">' + item.label + '</div>' +
+    '<blockquote>' + item.quote + '</blockquote>' +
+    '</div>'
+  ).join('');
+  document.getElementById('modal-overlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+// Concession toggle
+function toggleConcession(card) {
+  card.classList.toggle('open');
+}
+
+// Nav highlighting
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav a');
+
+function updateNav() {
+  let current = '';
+  sections.forEach(function(section) {
+    const top = section.offsetTop - 80;
+    if (window.scrollY >= top) current = section.id;
+  });
+  navLinks.forEach(function(link) {
+    link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+  });
+}
+
+window.addEventListener('scroll', updateNav, { passive: true });
+updateNav();
+</script>
+</body>
+</html>
